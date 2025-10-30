@@ -1,0 +1,18 @@
+{
+  "name": "liuren-divination-system",
+  "version": "1.0.0",
+  "description": "大六壬智慧排盤 - 付費起卦系統",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build needed'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0"
+  }
+}
