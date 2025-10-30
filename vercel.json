@@ -11,11 +11,5 @@
       "src": "/api/(.*)",
       "dest": "/api/$1"
     }
-  ],
-  "env": {
-    "ADMIN_PASSWORD": "@admin-password",
-    "PAYPAL_CLIENT_ID": "@paypal-client-id",
-    "PAYPAL_CLIENT_SECRET": "@paypal-client-secret",
-    "PAYPAL_SANDBOX": "false"
+  ]
   }
-}
