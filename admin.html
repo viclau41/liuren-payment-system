@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大六壬 - 管理後台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', Arial, "Microsoft JhengHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(120deg, #336633, #2f4f4f);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #336633;
+            box-shadow: 0 0 0 3px rgba(51,102,51,0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #336633 0%, #2f4f4f 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(51,102,51,0.3);
+        }
+
+        .btn-secondary {
+            background: #3182ce;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+        }
+
+        .result-box {
+            background: #f0fff4;
+            border: 2px solid #68d391;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .result-box.error {
+            background: #fff5f5;
+            border-color: #fc8181;
+        }
+
+        .code-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+            letter-spacing: 2px;
+            font-family: monospace;
+            margin: 15px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登入遮罩 -->
+    <div id="login-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;">
+        <div style="background:white;padding:40px;border-radius:20px;max-width:400px;width:90%;">
+            <h2 style="color:#336633;font-size:28px;margin-bottom:20px;text-align:center;">🔒 管理員登入</h2>
+            <div class="input-group">
+                <label for="admin-password">密碼</label>
+                <input type="password" id="admin-password" placeholder="請輸入管理員密碼">
+            </div>
+            <button class="btn" style="width:100%;margin-top:10px;" onclick="login()">登入</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="header">
+            <h1 style="font-size: 32px; margin-bottom: 10px;">🎛️ 大六壬管理後台</h1>
+            <p style="opacity: 0.9;">Victor AI 主理 - 起卦碼管理系統</p>
+        </div>
+
+        <div class="content">
+            <!-- 生成新起卦码 -->
+            <div class="section">
+                <div class="section-title">🎫 生成新起卦碼</div>
+                <div class="input-group">
+                    <label for="new-email">客戶郵箱（可選）</label>
+                    <input type="email" id="new-email" placeholder="例如：customer@example.com">
+                </div>
+                <div class="input-group">
+                    <label for="new-uses">起卦次數</label>
+                    <select id="new-uses">
+                        <option value="5" selected>5次（標準：3次+送2次）</option>
+                        <option value="10">10次</option>
+                        <option value="20">20次</option>
+                        <option value="50">50次</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="createNewCode()">生成起卦碼</button>
+
+                <div id="create-result" class="result-box"></div>
+            </div>
+
+            <!-- 为现有码增加次数 -->
+            <div class="section">
+                <div class="section-title">➕ 為現有起卦碼增加次數</div>
+                <div class="input-group">
+                    <label for="existing-code">起卦碼</label>
+                    <input type="text" id="existing-code" placeholder="例如：LR-ABCD-1234" style="text-transform:uppercase;">
+                </div>
+                <div class="input-group">
+                    <label for="add-uses">增加次數</label>
+                    <select id="add-uses">
+                        <option value="5" selected>5次</option>
+                        <option value="10">10次</option>
+                        <option value="20">20次</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" onclick="addQuota()">增加次數</button>
+
+                <div id="add-result" class="result-box"></div>
+            </div>
+
+            <!-- 查询起卦码 -->
+            <div class="section">
+                <div class="section-title">🔍 查詢起卦碼狀態</div>
+                <div class="input-group">
+                    <label for="check-code">起卦碼</label>
+                    <input type="text" id="check-code" placeholder="例如：LR-ABCD-1234" style="text-transform:uppercase;">
+                </div>
+                <button class="btn btn-secondary" onclick="checkCode()">查詢</button>
+
+                <div id="check-result" class="result-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adminPassword = '';
+
+        // 自定义 Alert 函数
+        function showAlert(message) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;';
+            modal.innerHTML = `
+                <div style="background:white;padding:30px;border-radius:15px;max-width:400px;width:90%;box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+                    <p style="color:#2d3748;margin-bottom:20px;font-size:16px;line-height:1.6;">${message}</p>
+                    <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;background:#336633;color:white;padding:12px;border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:600;">確定</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 登入
+        function login() {
+            const password = document.getElementById('admin-password').value;
+
+            if (!password) {
+                showAlert('請輸入密碼');
+                return;
+            }
+
+            adminPassword = password;
+            document.getElementById('login-overlay').style.display = 'none';
+        }
+
+        // Enter 键登入
+        document.getElementById('admin-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        // 生成新起卦码
+        async function createNewCode() {
+            const email = document.getElementById('new-email').value.trim();
+            const totalUses = parseInt(document.getElementById('new-uses').value);
+            const resultBox = document.getElementById('create-result');
+
+            try {
+                const response = await fetch('/api/create-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        password: adminPassword,
+                        email,
+                        totalUses
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                resultBox.className = 'result-box';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <h3 style="color:#38a169;font-size:18px;margin-bottom:15px;">✅ 起卦碼生成成功！</h3>
+                    <div class="code-display">${result.accessCode}</div>
+                    <p style="color:#4a5568;margin-top:10px;text-align:center;">
+                        總次數：${result.totalUses} 次<br>
+                        有效期至：${new Date(result.expiresAt).toLocaleDateString('zh-TW')}
+                    </p>
+                    <button onclick="copyToClipboard('${result.accessCode}')" class="btn" style="width:100%;margin-top:15px;">
+                        📋 複製起卦碼
+                    </button>
+                `;
+
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <h3 style="color:#e53e3e;font-size:18px;margin-bottom:10px;">❌ 操作失敗</h3>
+                    <p style="color:#742a2a;">${error.message}</p>
+                `;
+            }
+        }
+
+        // 增加配额
+        async function addQuota() {
+            const code = document.getElementById('existing-code').value.trim().toUpperCase();
+            const additionalUses = parseInt(document.getElementById('add-uses').value);
+            const resultBox = document.getElementById('add-result');
+
+            if (!code) {
+                showAlert('請輸入起卦碼');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/add-quota', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        password: adminPassword,
+                        code,
+                        additionalUses
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                resultBox.className = 'result-box';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <h3 style="color:#38a169;font-size:18px;margin-bottom:10px;">✅ 增加成功！</h3>
+                    <p style="color:#4a5568;">
+                        起卦碼：<strong>${result.accessCode}</strong><br>
+                        已增加：${additionalUses} 次<br>
+                        總次數：${result.totalUses} 次<br>
+                        已使用：${result.usedCount} 次<br>
+                        剩餘次數：<strong style="color:#38a169;font-size:20px;">${result.remaining}</strong> 次
+                    </p>
+                `;
+
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <h3 style="color:#e53e3e;font-size:18px;margin-bottom:10px;">❌ 操作失敗</h3>
+                    <p style="color:#742a2a;">${error.message}</p>
+                `;
+            }
+        }
+
+        // 查询起卦码
+        async function checkCode() {
+            const code = document.getElementById('check-code').value.trim().toUpperCase();
+            const resultBox = document.getElementById('check-result');
+
+            if (!code) {
+                showAlert('請輸入起卦碼');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/check-quota', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                resultBox.className = 'result-box';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <h3 style="color:#38a169;font-size:18px;margin-bottom:10px;">✅ 查詢成功</h3>
+                    <p style="color:#4a5568;line-height:1.8;">
+                        起卦碼：<strong>${code}</strong><br>
+                        總次數：${result.total} 次<br>
+                        已使用：${result.used} 次<br>
+                        剩餘次數：<strong style="color:#38a169;font-size:20px;">${result.remaining}</strong> 次<br>
+                        創建時間：${new Date(result.createdAt).toLocaleString('zh-TW')}
+                    </p>
+                `;
+
+            } catch (error) {
+                resultBox.className = 'result-box error';
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = `
+                    <h3 style="color:#e53e3e;font-size:18px;margin-bottom:10px;">❌ 查詢失敗</h3>
+                    <p style="color:#742a2a;">${error.message}</p>
+                `;
+            }
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('✅ 已複製到剪貼板：' + text);
+            }).catch(() => {
+                showAlert('複製失敗，請手動複製');
+            });
+        }
+    </script>
+</body>
+</html>
