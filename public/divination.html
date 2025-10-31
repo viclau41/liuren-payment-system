@@ -832,16 +832,239 @@ ${structuredData}
         }
 
         // 这里需要包含你原程序的 generateClientJS 和 generateClientHTML 函数
-        // 由于太长，我会在下一个文件中创建
-        function generateClientJS(data, tianpanData, tianjiangData, kongwangInfo, chatHistoryJSON) {
-            // 简化版本 - 实际应该使用你原程序的完整代码
-            return `console.log('Report loaded');`;
-        }
+       // ✅ 完整版 generateClientJS 函數（替換第 836 行開始的簡化版本）
+function generateClientJS(data, tianpanData, tianjiangData, kongwangInfo, chatHistoryJSON) {
+    const fullReportText = generateStructuredDataText(data, {
+        ganzhi: {
+            year: data.basicInfo.四柱干支.split(' ')[0],
+            month: data.basicInfo.四柱干支.split(' ')[1],
+            day: data.basicInfo.四柱干支.split(' ')[2],
+            hour: data.basicInfo.四柱干支.split(' ')[3]
+        },
+        yuejiang: {
+            name: data.basicInfo.月將節氣.split('(')[0],
+            dizhi: data.basicInfo.月將節氣.match(/\((.)\)/)[1],
+            current_jieqi: data.basicInfo.月將節氣.split(' - ')[1]
+        },
+        sike: {},
+        sanchuan: { method: data.ketiAnalysis.發用取法 },
+        keti: { name: data.ketiAnalysis.課體 }
+    });
 
-        function generateClientHTML(data, autoAnalysisResult, clientJS) {
-            // 简化版本 - 实际应该使用你原程序的完整代码
-            return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>報告</title></head><body><h1>報告生成成功</h1><p>' + autoAnalysisResult + '</p><script>' + clientJS + '<' + '/script></body></html>';
+    const reportId = generateSimpleSecureId();
+
+    return `
+const REPORT_ID = 'liuren_chat_${reportId}';
+const MAX_HISTORY_DISPLAY = 50;
+const MAX_HISTORY_API = 20;
+let clientChatHistory = [];
+
+const fullReportText = \`${fullReportText.replace(/`/g, '\\`')}\`;
+
+function initClientFontController() {
+    const savedScale = localStorage.getItem('client-font-scale') || '1';
+    const savedButtonScale = localStorage.getItem('client-button-scale') || '1';
+    const savedLineHeightScale = localStorage.getItem('client-line-height-scale') || '1';
+    document.documentElement.style.setProperty('--font-scale', savedScale);
+    document.documentElement.style.setProperty('--button-scale', savedButtonScale);
+    document.documentElement.style.setProperty('--line-height-scale', savedLineHeightScale);
+    document.querySelectorAll('.font-size-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.scale === savedScale) btn.classList.add('active');
+    });
+    document.querySelectorAll('.font-size-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const scale = this.dataset.scale;
+            setClientFontScale(scale);
+            document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+}
+
+function setClientFontScale(scale) {
+    const fontScale = parseFloat(scale);
+    const buttonScale = Math.min(fontScale, 1.15);
+    const lineHeightScale = Math.min(1 + (fontScale - 1) * 0.5, 1.15);
+    document.documentElement.style.setProperty('--font-scale', fontScale);
+    document.documentElement.style.setProperty('--button-scale', buttonScale);
+    document.documentElement.style.setProperty('--line-height-scale', lineHeightScale);
+    localStorage.setItem('client-font-scale', fontScale);
+    localStorage.setItem('client-button-scale', buttonScale);
+    localStorage.setItem('client-line-height-scale', lineHeightScale);
+}
+
+async function fetchWithTimeout(r, o = {}, t = 60000) {
+    const c = new AbortController();
+    const i = setTimeout(() => c.abort(), t);
+    try {
+        const n = await fetch(r, {...o, signal: c.signal});
+        clearTimeout(i);
+        return n;
+    } catch(e) {
+        clearTimeout(i);
+        if (e.name === 'AbortError') throw new Error('請求超時');
+        throw e;
+    }
+}
+
+function showAlert(m) { alert(m); }
+
+function saveHistory() {
+    try {
+        localStorage.setItem(REPORT_ID, JSON.stringify(clientChatHistory));
+    } catch(e) {
+        console.error("無法儲存:", e);
+    }
+}
+
+function loadHistory() {
+    try {
+        const saved = localStorage.getItem(REPORT_ID);
+        return saved ? JSON.parse(saved) : null;
+    } catch(e) {
+        return null;
+    }
+}
+
+function addClientMessage(t, c) {
+    let d = document.getElementById('client-chat-history');
+    if (d.querySelector('.initial-msg')) d.innerHTML = '';
+    if (t === 'user') clientChatHistory.push({type: t, content: c});
+    else if (t === 'ai') clientChatHistory.push({type: t, content: c});
+    while (clientChatHistory.length > MAX_HISTORY_DISPLAY) clientChatHistory.shift();
+    if (t !== 'ai-thinking') saveHistory();
+    renderHistory(t === 'ai-thinking');
+}
+
+function renderHistory(isThinking = false) {
+    let d = document.getElementById('client-chat-history');
+    if (clientChatHistory.length === 0 && !isThinking) {
+        d.innerHTML = '<p class="initial-msg font-adjustable">您可以在此繼續就本次占卜提問。</p>';
+        return;
+    }
+    let historyHtml = clientChatHistory.map(m => {
+        if (m.type === 'user') return '<div class="chat-item user font-adjustable"><strong>您的提問：</strong> ' + m.content + '</div>';
+        return '<div class="chat-item ai font-adjustable"><strong>Victor AI 助手：</strong> ' + m.content.replace(/\\n/g, '<br>') + '</div>';
+    }).join('');
+    if (isThinking) {
+        historyHtml += '<div class="chat-item ai font-adjustable" data-thinking="true"><strong>Victor AI 助手：</strong> 正在思考中...</div>';
+    }
+    d.innerHTML = historyHtml;
+    d.scrollTop = d.scrollHeight;
+}
+
+function removeThinking() {
+    let e = document.querySelector('[data-thinking="true"]');
+    if (e) e.remove();
+}
+
+async function askClientAI() {
+    let q = document.getElementById('client-question').value.trim();
+    if (!q) { showAlert('請輸入問題'); return; }
+    addClientMessage('user', q);
+    document.getElementById('client-question').value = '';
+    addClientMessage('ai-thinking', '');
+
+    const apiHistory = clientChatHistory.slice(0, -1).slice(-MAX_HISTORY_API);
+    const casualPrompt = \`你是精通六壬的Victor AI助手。
+
+【當前占卜資料】
+\${fullReportText}
+
+【對話記憶】
+\${apiHistory.map(m => (m.type === 'user' ? '客戶' : 'Victor') + '：' + m.content).join('\\n')}
+
+【客戶問題】
+「\${q}」
+
+請提供實用且個人化的回答。\`;
+
+    try {
+        let r = await fetchWithTimeout('https://poe-api-backend.vercel.app/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message: casualPrompt, model: 'GPT-4.1-mini'})
+        });
+        removeThinking();
+        if (!r.ok) throw new Error('AI服務暫時無法連線');
+        let data = await r.json();
+        addClientMessage('ai', data.text || 'AI未能提供有效回應。');
+    } catch(e) {
+        removeThinking();
+        addClientMessage('ai', '❌ 抱歉，我暫時無法回答：' + e.message);
+    }
+}
+
+function renderClientLiurenPan() {
+    const circle = document.getElementById('client-liuren-circle');
+    if (!circle) return;
+    circle.innerHTML = '';
+    const traditionalLayout = ['巳', '午', '未', '申', '辰', '', '', '酉', '卯', '', '', '戌', '寅', '丑', '子', '亥'];
+    const realTianjiang = ${JSON.stringify(tianjiangData)};
+    const realTianpan = ${JSON.stringify(tianpanData)};
+    const kongwangData = ${JSON.stringify(kongwangInfo)};
+    const kongwangZhi = kongwangData ? kongwangData.kongwangZhi : [];
+    traditionalLayout.forEach(zhi => {
+        const div = document.createElement('div');
+        if (zhi === '') {
+            div.className = 'client-grid-item empty';
+            div.style.background = 'transparent';
+            div.style.border = 'none';
+        } else {
+            const isKongwang = kongwangZhi.includes(zhi);
+            div.className = 'client-grid-item client-dizhi-item' + (isKongwang ? ' client-kongwang-dizhi' : '');
+            div.innerHTML =
+                '<div class="client-tianjiang">' + (realTianjiang[zhi] || '-') + '</div>' +
+                '<div class="client-tianpan">' + (realTianpan[zhi] || '-') + '</div>' +
+                '<div class="client-dizhi-name">' + zhi + (isKongwang ? ' 🈳' : '') + '</div>';
         }
+        circle.appendChild(div);
+    });
+}
+
+function clearClientChat() {
+    if (clientChatHistory.length === 0) {
+        showAlert('目前沒有對話記錄');
+        return;
+    }
+    if (confirm('確定要清除所有對話記錄嗎？')) {
+        clientChatHistory = [];
+        if (localStorage.getItem(REPORT_ID)) {
+            localStorage.removeItem(REPORT_ID);
+        }
+        renderHistory();
+        showAlert('✅ 對話記錄已清除');
+    }
+}
+
+function initializeChat() {
+    const initialHistory = ${chatHistoryJSON};
+    const savedHistory = loadHistory();
+    if (savedHistory && Array.isArray(savedHistory)) {
+        clientChatHistory = savedHistory;
+    } else {
+        clientChatHistory = initialHistory;
+    }
+    renderHistory();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initClientFontController();
+    initializeChat();
+    renderClientLiurenPan();
+    document.getElementById('client-send-btn').addEventListener('click', askClientAI);
+    document.getElementById('client-clear-btn').addEventListener('click', clearClientChat);
+    document.getElementById('client-question').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            askClientAI();
+        }
+    });
+});
+`;
+}
+
     </script>
 </body>
 </html>
