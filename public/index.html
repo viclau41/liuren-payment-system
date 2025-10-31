@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大六壬智慧排盤 - 付款選擇</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ⚠️ 請將 YOUR_PAYPAL_CLIENT_ID 替換為真實的 PayPal Client ID -->
     <script src="https://www.paypal.com/sdk/js?client-id=ASAUF0ean7gjcE1x4TVCG43mQlOBuRGzwfK1Vqr_yfijiJP8fu-IbsJCzpf2WWxJFfztG5iwULW8PhsJ&currency=HKD"></script>
     <style>
         body {
@@ -22,7 +21,7 @@
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 700px;
+            max-width: 600px;
             width: 100%;
             overflow: hidden;
             position: relative;
@@ -71,85 +70,38 @@
             z-index: 2;
         }
 
-        /* 📦 新增：套餐選擇卡片 */
-        .package-selection {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .package-card {
+        .price-card {
             background: linear-gradient(135deg, #fff9e6 0%, #fef3c7 100%);
-            border: 3px solid #e2e8f0;
+            border: 2px solid #e2e8f0;
             border-radius: 15px;
-            padding: 20px;
+            padding: 25px;
             text-align: center;
+            margin-bottom: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
         }
 
-        .package-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-
-        .package-card.selected {
+        .price-card:hover {
             border-color: #f59e0b;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2);
         }
 
-        .package-card .badge {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #ef4444;
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+        .price-card.selected {
+            border: 3px solid #336633;
+            background: linear-gradient(135deg, #e6f7ed 0%, #d1f2e0 100%);
+            box-shadow: 0 5px 20px rgba(51, 102, 51, 0.3);
         }
 
-        .package-card h3 {
-            font-size: 20px;
-            color: #92400e;
-            margin-bottom: 10px;
+        .package-radio {
+            display: none;
         }
 
-        .package-price {
-            font-size: 32px;
+        .price {
+            font-size: 42px;
             font-weight: bold;
             color: #92400e;
-            margin: 10px 0;
-        }
-
-        .package-original-price {
-            font-size: 14px;
-            color: #78716c;
-            text-decoration: line-through;
-            margin-bottom: 5px;
-        }
-
-        .package-quota {
-            font-size: 16px;
-            color: #92400e;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        .package-features {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0 0 0;
-            font-size: 13px;
-            color: #78716c;
-        }
-
-        .package-features li {
-            padding: 5px 0;
+            margin: 15px 0;
         }
 
         .payment-section {
@@ -298,9 +250,6 @@
                 width: 80px;
                 height: 80px;
             }
-            .package-selection {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -315,53 +264,46 @@
         </div>
 
         <div class="content">
-            <!-- 📦 套餐選擇區 -->
-            <h2 style="font-size: 24px; color: #2d3748; margin-bottom: 20px; text-align: center;">
-                💎 選擇您的套餐
+            <!-- 套餐選擇標題 -->
+            <h2 style="font-size: 22px; color: #2d3748; margin-bottom: 20px; text-align: center;">
+                💎 選擇您的起卦套餐
             </h2>
 
-            <div class="package-selection">
-                <!-- 單次起卦 (測試價格) -->
-                <div class="package-card" data-package="single" onclick="selectPackage('single')">
-                    <div class="badge">🔥 測試優惠</div>
-                    <h3>單次起卦</h3>
-                    <div class="package-original-price">原價 HKD 399</div>
-                    <div class="package-price">HKD 399</div>
-                    <div class="package-quota">1 次起卦機會</div>
-                    <ul class="package-features">
-                        <li>✓ 完整 AI 分析</li>
-                        <li>✓ 互動式報告</li>
-                    </ul>
-                </div>
-
-                <!-- 3次套餐 (送2次) -->
-                <div class="package-card selected" data-package="three" onclick="selectPackage('three')">
-                    <div class="badge">💝 送2次</div>
-                    <h3>3次套餐</h3>
-                    <div class="package-price">HKD 1,000</div>
-                    <div class="package-quota">實際獲得 5 次</div>
-                    <ul class="package-features">
-                        <li>✓ 購買3次送2次</li>
-                        <li>✓ 新客專享優惠</li>
-                        <li>✓ 最超值選擇</li>
-                    </ul>
-                </div>
-
-                <!-- 5次套餐 -->
-                <div class="package-card" data-package="five" onclick="selectPackage('five')">
-                    <h3>5次套餐</h3>
-                    <div class="package-price">HKD 1,600</div>
-                    <div class="package-quota">5 次起卦機會</div>
-                    <ul class="package-features">
-                        <li>✓ 專業套餐</li>
-                        <li>✓ 長期使用</li>
-                    </ul>
-                </div>
+            <!-- 單次起卦套餐 -->
+            <div class="price-card" id="package-single" onclick="selectPackage('single')">
+                <input type="radio" name="package" value="single" class="package-radio" id="radio-single">
+                <h2 style="font-size: 20px; color: #92400e; margin-bottom: 10px;">🔮 單次起卦</h2>
+                <div class="price">HKD 399</div>
+                <p style="color: #92400e; font-size: 16px; font-weight: 600;">1次專業起卦服務</p>
+                <ul class="feature-list">
+                    <li>Victor AI 專業六壬分析</li>
+                    <li>詳細課式與盤面解讀</li>
+                    <li>可隨時追問與互動</li>
+                    <li>報告永久保存連結</li>
+                </ul>
+                <p style="color: #d69e2e; font-size: 13px; margin-top: 10px;">
+                    ⚠️ 測試模式：實際收費 HKD 1
+                </p>
             </div>
 
-            <div style="background: #fff7ed; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-                <p style="color: #92400e; font-size: 14px; margin: 0;">
-                    <strong>✨ 所有套餐包含：</strong> Victor AI 專業六壬分析 · 詳細課式與盤面解讀 · 可隨時追問與互動 · 報告永久保存連結
+            <!-- 超值套餐 -->
+            <div class="price-card selected" id="package-bundle" onclick="selectPackage('bundle')">
+                <input type="radio" name="package" value="bundle" class="package-radio" id="radio-bundle" checked>
+                <div style="background: #f59e0b; color: white; padding: 5px 15px; border-radius: 20px; display: inline-block; font-size: 12px; font-weight: 600; margin-bottom: 10px;">
+                    🎁 超值推薦
+                </div>
+                <h2 style="font-size: 20px; color: #92400e; margin-bottom: 10px;">💎 超值套餐</h2>
+                <div class="price">HKD 1,000</div>
+                <p style="color: #92400e; font-size: 16px; font-weight: 600;">3次起卦 + 新客送2次</p>
+                <ul class="feature-list">
+                    <li>Victor AI 專業六壬分析</li>
+                    <li>詳細課式與盤面解讀</li>
+                    <li>可隨時追問與互動</li>
+                    <li>報告永久保存連結</li>
+                    <li style="color: #f59e0b; font-weight: 600;">💰 平均每次僅 HKD 200</li>
+                </ul>
+                <p style="color: #d69e2e; font-size: 13px; margin-top: 10px;">
+                    ⚠️ 測試模式：實際收費 HKD 1000
                 </p>
             </div>
 
@@ -386,7 +328,7 @@
                     <p style="font-size: 18px; font-weight: bold; color: #2d3748; margin: 10px 0;">
                         66381789 或 61883889
                     </p>
-                    <p style="margin-top: 15px;"><strong>💰 金額：</strong><span id="fps-amount">HKD 1,000</span></p>
+                    <p style="margin-top: 15px;"><strong>💰 金額：</strong>HKD 1,000</p>
                     <p style="margin-top: 10px; color: #d69e2e;">
                         ⚠️ 付款後請 WhatsApp 聯絡我們，提供付款截圖以獲取起卦碼
                     </p>
@@ -426,47 +368,24 @@
     </div>
 
     <script>
-        // 套餐配置
-        const PACKAGES = {
-            single: {
-                name: '單次起卦',
-                // ⚠️ 測試價格：顯示 399 但實際扣 1 元（測試完成後改回 399）
-                displayPrice: 399,
-                actualPrice: 1,  // 👈 測試用，正式上線改為 399
-                quota: 1,
-                description: '單次專業起卦'
-            },
-            three: {
-                name: '3次套餐 (送2次)',
-                displayPrice: 1000,
-                actualPrice: 1000,
-                quota: 5,  // 3次購買 + 2次贈送
-                description: '購買3次送2次，共5次'
-            },
-            five: {
-                name: '5次套餐',
-                displayPrice: 1600,
-                actualPrice: 1600,
-                quota: 5,
-                description: '專業5次套餐'
-            }
-        };
+        // 當前選擇的套餐（默認為 bundle）
+        let selectedPackage = 'bundle';
 
-        let selectedPackage = 'three'; // 默認選中3次套餐
-
-        // 選擇套餐
+        // 套餐選擇函數
         function selectPackage(packageType) {
             selectedPackage = packageType;
 
-            // 更新 UI
-            document.querySelectorAll('.package-card').forEach(card => {
+            // 移除所有選中狀態
+            document.querySelectorAll('.price-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            document.querySelector(`[data-package="${packageType}"]`).classList.add('selected');
 
-            // 更新轉數快金額顯示
-            const pkg = PACKAGES[packageType];
-            document.getElementById('fps-amount').textContent = `HKD ${pkg.displayPrice.toLocaleString()}`;
+            // 添加選中狀態
+            const selectedCard = document.getElementById('package-' + packageType);
+            selectedCard.classList.add('selected');
+
+            // 更新 radio 按鈕
+            document.getElementById('radio-' + packageType).checked = true;
         }
 
         // 自定义 Alert 函数
@@ -486,17 +405,10 @@
         paypal.Buttons({
             createOrder: async function() {
                 try {
-                    const pkg = PACKAGES[selectedPackage];
-
                     const response = await fetch('/api/paypal-create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            packageType: selectedPackage,
-                            amount: pkg.actualPrice,  // 使用實際價格（測試時為1元）
-                            quota: pkg.quota,
-                            description: pkg.description
-                        })
+                        body: JSON.stringify({ packageType: selectedPackage })
                     });
 
                     const data = await response.json();
@@ -561,7 +473,7 @@
                         </p>
                     </div>
                     <p style="color:#d69e2e;font-size:14px;margin:20px 0;">
-                        ⚠️ 請���存好您的起卦碼，稍後需要用它來起卦
+                        ⚠️ 請保存好您的起卦碼，稍後需要用它來起卦
                     </p>
                     <button onclick="copyCode('${accessCode}')" style="width:100%;background:#3182ce;color:white;padding:15px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;">
                         📋 複製起卦碼
