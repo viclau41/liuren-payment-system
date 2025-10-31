@@ -1,15 +1,14 @@
 import fetch from 'node-fetch';
 
-// PayPal 配置（从环境变量读取）
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
-const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
-const PAYPAL_API_BASE = process.env.PAYPAL_SANDBOX === 'true'
-    ? 'https://api-m.sandbox.paypal.com'
-    : 'https://api-m.paypal.com';
+const PAYPAL_API_BASE = process.env.PAYPAL_MODE === 'production'
+    ? 'https://api-m.paypal.com'
+    : 'https://api-m.sandbox.paypal.com';
 
-// 获取 PayPal Access Token
 async function getPayPalAccessToken() {
-    const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
         method: 'POST',
@@ -25,49 +24,79 @@ async function getPayPalAccessToken() {
 }
 
 export default async function handler(req, res) {
-    // 只允许 POST 请求
+    // CORS 設置
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, error: '只允許 POST 請求' });
+        return res.status(405).json({ error: 'Method not allowed' });
     }
 
     try {
+        const { planType, amount } = req.body;
+
+        // ✅ 使用前端傳來的實際金額
+        let actualAmount = amount;
+        let description = '';
+
+        // 根據 planType 設置描述
+        if (planType === 'single') {
+            description = '大六壬智慧排盤 - 單次起卦';
+        } else if (planType === 'triple') {
+            description = '大六壬智慧排盤 - 3次套餐 (送2次)';
+        } else {
+            return res.status(400).json({ error: '無效的方案類型' });
+        }
+
+        // 獲取 PayPal Access Token
         const accessToken = await getPayPalAccessToken();
 
-        // 创建 PayPal 订单
+        // 創建訂單
         const orderResponse = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({
                 intent: 'CAPTURE',
                 purchase_units: [{
                     amount: {
                         currency_code: 'HKD',
-                        value: '1000.00'
+                        value: actualAmount.toFixed(2)  // ✅ 使用前端傳來的實際金額
                     },
-                    description: '大六壬智慧排盤 - 5次起卦服務'
-                }]
+                    description: description
+                }],
+                application_context: {
+                    brand_name: 'Victor AI 大六壬',
+                    landing_page: 'NO_PREFERENCE',
+                    user_action: 'PAY_NOW'
+                }
             })
         });
 
         const orderData = await orderResponse.json();
 
         if (!orderResponse.ok) {
-            throw new Error(orderData.message || 'PayPal 訂單創建失敗');
+            console.error('PayPal 訂單創建失敗:', orderData);
+            return res.status(500).json({
+                error: 'PayPal 訂單創建失敗',
+                details: orderData
+            });
         }
 
-        return res.status(200).json({
-            success: true,
-            orderID: orderData.id
-        });
+        return res.status(200).json({ id: orderData.id });
 
     } catch (error) {
         console.error('創建 PayPal 訂單錯誤:', error);
         return res.status(500).json({
-            success: false,
-            error: error.message || '服務器錯誤'
+            error: '服務器錯誤',
+            message: error.message
         });
     }
 }
