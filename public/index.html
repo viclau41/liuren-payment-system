@@ -3,280 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大六壬智慧排盤 - 付費方案選擇</title>
+    <title>大六壬起卦系統 - Victor AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ✅ PayPal SDK - 請替換成你的真實 Client ID -->
-    <script src="https://www.paypal.com/sdk/js?client-id=ASAUF0ean7gjcE1x4TVCG43mQlOBuRGzwfK1Vqr_yfijiJP8fu-IbsJCzpf2WWxJFfztG5iwULW8PhsJ&currency=HKD"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=ARV4ejc4ZL7t_M51WfAohb8P3LtBsvH2tNlGSYQTSZpDO6xZwLt_wAeLkIZPDgXB6VUUqUW13qZU69SG&currency=HKD"></script>
     <style>
         body {
-            font-family: 'Noto Sans TC', Arial, "Microsoft JhengHei", sans-serif;
+            font-family: 'Noto Sans TC', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-        }
-        .plans {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .plan-card {
+        .card {
             background: white;
             border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .plan {
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease;
+            margin: 15px 0;
             cursor: pointer;
-            border: 3px solid transparent;
+            transition: all 0.3s ease;
         }
-        .plan-card:hover {
-            transform: translateY(-5px);
-        }
-        .plan-card.selected {
+        .plan:hover {
             border-color: #336633;
-            box-shadow: 0 10px 30px rgba(51,102,51,0.4);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(51,102,51,0.2);
         }
-        .plan-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 10px;
+        .plan.selected {
+            border-color: #336633;
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border-width: 3px;
         }
-        .plan-price {
+        .price {
             font-size: 36px;
             font-weight: bold;
             color: #336633;
-            margin-bottom: 15px;
         }
-        .plan-features {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0;
-        }
-        .plan-features li {
-            padding: 8px 0;
-            color: #4a5568;
-        }
-        .plan-features li:before {
-            content: "✓ ";
-            color: #68d391;
-            font-weight: bold;
-            margin-right: 5px;
-        }
-        .paypal-button-container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-        }
-        .has-code-section {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        .code-input {
-            width: 100%;
-            max-width: 300px;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 16px;
-            text-align: center;
-            text-transform: uppercase;
-        }
-        .use-code-btn {
-            background: linear-gradient(135deg, #336633 0%, #2f4f4f 100%);
+        .badge {
+            background: #f59e0b;
             color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
             font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
         }
-        .use-code-btn:hover {
-            opacity: 0.9;
+        #paypal-button-container {
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 style="font-size: 36px; margin-bottom: 10px;">🧮 大六壬智慧排盤</h1>
-            <p style="font-size: 18px; opacity: 0.9;">Victor AI 主理 · 專業六壬分析服務</p>
-        </div>
+    <div class="card">
+        <h1 style="text-align:center;color:#336633;font-size:32px;margin-bottom:10px;">🧮 大六壬起卦系統</h1>
+        <p style="text-align:center;color:#718096;margin-bottom:40px;">選擇您的方案</p>
 
-        <div class="plans">
-            <!-- ✅ 單次購買選項 (測試：顯示399元，實際扣1元) -->
-            <div class="plan-card" onclick="selectPlan('single', 1, 399)" id="plan-single">
-                <div class="plan-title">單次起卦</div>
-                <div class="plan-price">HK$ 399</div>
-                <ul class="plan-features">
-                    <li>1 次專業起卦分析</li>
-                    <li>Victor AI 深度解讀</li>
-                    <li>完整課式報告</li>
-                    <li>隨時隨地查閱</li>
-                </ul>
-            </div>
-
-            <!-- 3次套餐 (測試：顯示1000元，實際扣10元) -->
-            <div class="plan-card" onclick="selectPlan('triple', 10, 1000)" id="plan-triple">
-                <div class="plan-title">3次套餐 🎁</div>
-                <div class="plan-price">HK$ 1,000</div>
-                <div style="background: #f0fff4; color: #38a169; padding: 8px; border-radius: 8px; margin-bottom: 10px; font-weight: 600;">
-                    新客優惠：送 2 次！共 5 次
+        <!-- 單次起卦選項 -->
+        <div class="plan" id="plan-single" onclick="selectPlan('single')">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <h3 style="font-size:24px;font-weight:600;color:#2d3748;margin-bottom:10px;">單次起卦</h3>
+                    <p style="color:#718096;font-size:16px;">專業六壬分析一次</p>
                 </div>
-                <ul class="plan-features">
-                    <li>3 次起卦 + 贈送 2 次</li>
-                    <li>平均每次僅 HK$200</li>
-                    <li>30天內有效</li>
-                    <li>最超值選擇</li>
-                </ul>
+                <div style="text-align:right;">
+                    <div class="price">HK$1</div>
+                    <p style="color:#718096;font-size:14px;">測試價格</p>
+                </div>
             </div>
         </div>
 
-        <!-- PayPal 按鈕容器 -->
-        <div class="paypal-button-container" id="paypal-container" style="display:none;">
-            <h3 style="text-align:center; margin-bottom:20px; color:#2d3748;">請選擇付款方式</h3>
-            <div id="paypal-button"></div>
+        <!-- 3次套餐選項 -->
+        <div class="plan" id="plan-triple" onclick="selectPlan('triple')">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                <div>
+                    <h3 style="font-size:24px;font-weight:600;color:#2d3748;margin-bottom:10px;">3次套餐</h3>
+                    <p style="color:#718096;font-size:16px;">共5次起卦機會</p>
+                </div>
+                <div style="text-align:right;">
+                    <div class="price">HK$10</div>
+                    <p style="color:#718096;font-size:14px;">測試價格</p>
+                </div>
+            </div>
+            <div style="background:#fef3c7;padding:15px;border-radius:10px;border-left:4px solid #f59e0b;">
+                <p style="color:#92400e;font-size:14px;margin:0;">🎁 <strong>新客優惠：</strong>購買3次額外贈送2次，共5次起卦機會！</p>
+            </div>
         </div>
 
-        <!-- 已有起卦碼 -->
-        <div class="has-code-section">
-            <h3 style="color:#2d3748; margin-bottom:15px;">已有起卦碼？</h3>
-            <input
-                type="text"
-                class="code-input"
-                id="existing-code"
-                placeholder="請輸入起卦碼 (例：LR-XXXX-XXXX)"
-                maxlength="13"
-            >
-            <br>
-            <button class="use-code-btn" onclick="useExistingCode()">開始起卦</button>
-        </div>
+        <div id="paypal-button-container"></div>
+
+        <p style="text-align:center;color:#718096;font-size:14px;margin-top:30px;">
+            © 2025 Victor AI 主理 · 安全支付由 PayPal 提供
+        </p>
     </div>
 
     <script>
         let selectedPlan = null;
-        let actualAmount = 0;  // ✅ 實際扣款金額
-        let displayAmount = 0; // ✅ 顯示金額
 
-        // 選擇方案
-        function selectPlan(planType, realPrice, showPrice) {
-            selectedPlan = planType;
-            actualAmount = realPrice;   // ✅ 實際扣款金額 (1元 或 10元)
-            displayAmount = showPrice;  // ✅ 顯示金額 (399元 或 1000元)
-
-            // 更新UI
-            document.querySelectorAll('.plan-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            document.getElementById('plan-' + planType).classList.add('selected');
-
-            // 顯示PayPal按鈕容器
-            document.getElementById('paypal-container').style.display = 'block';
-
-            // 渲染PayPal按鈕
-            renderPayPalButton();
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            document.querySelectorAll('.plan').forEach(p => p.classList.remove('selected'));
+            document.getElementById('plan-' + plan).classList.add('selected');
         }
 
-        // 渲染PayPal按鈕
-        function renderPayPalButton() {
-            const container = document.getElementById('paypal-button');
-            container.innerHTML = ''; // 清空舊按鈕
+        // 顯示提示訊息的函數
+        function showMessage(message, type = 'error') {
+            const existingModal = document.querySelector('.custom-modal');
+            if (existingModal) existingModal.remove();
 
-            paypal.Buttons({
-                createOrder: async function(data, actions) {
-                    try {
-                        const response = await fetch('/api/paypal-create-order', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                planType: selectedPlan,
-                                // ✅ 傳遞實際扣款金額給後端
-                                amount: actualAmount
-                            })
-                        });
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
 
-                        const order = await response.json();
-                        if (!order.id) {
-                            throw new Error('無法創建訂單');
-                        }
-                        return order.id;
-                    } catch (error) {
-                        alert('創建訂單失敗：' + error.message);
-                        throw error;
-                    }
-                },
+            const box = document.createElement('div');
+            box.style.cssText = 'background:white;padding:30px;border-radius:15px;max-width:400px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.3);';
 
-                onApprove: async function(data, actions) {
-                    try {
-                        const response = await fetch('/api/paypal-capture-order', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                orderID: data.orderID,
-                                planType: selectedPlan
-                            })
-                        });
+            const icon = type === 'error' ? '❌' : '✅';
+            box.innerHTML = `
+                <div style="font-size:48px;margin-bottom:15px;">${icon}</div>
+                <p style="font-size:18px;color:#2d3748;margin-bottom:25px;">${message}</p>
+                <button onclick="this.closest('.custom-modal').remove()" style="background:#336633;color:white;border:none;padding:12px 30px;border-radius:8px;font-size:16px;cursor:pointer;font-weight:600;">確定</button>
+            `;
 
-                        const result = await response.json();
+            modal.appendChild(box);
+            document.body.appendChild(modal);
+        }
 
-                        if (result.success && result.accessCode) {
-                            // 付款成功，跳轉到起卦頁面
-                            window.location.href = `divination.html?code=${result.accessCode}`;
-                        } else {
-                            alert('付款處理失敗：' + (result.error || '未知錯誤'));
-                        }
-                    } catch (error) {
-                        alert('付款確認失敗：' + error.message);
-                    }
-                },
+        // 默認選中3次套餐
+        selectPlan('triple');
 
-                onError: function(err) {
-                    console.error('PayPal錯誤:', err);
-                    alert('PayPal付款過程中發生錯誤，請重試');
+        // PayPal 按鈕
+        paypal.Buttons({
+            createOrder: async function() {
+                if (!selectedPlan) {
+                    showMessage('請選擇方案！');
+                    return;
                 }
-            }).render('#paypal-button');
-        }
 
-        // 使用已有起卦碼
-        function useExistingCode() {
-            const code = document.getElementById('existing-code').value.trim().toUpperCase();
+                // ✅ 根據選擇的方案設置正確的金額
+                const planConfig = {
+                    single: { amount: 1, description: '單次起卦 (測試)' },
+                    triple: { amount: 10, description: '3次套餐 (測試)' }
+                };
 
-            if (!code) {
-                alert('請輸入起卦碼');
-                return;
+                const config = planConfig[selectedPlan];
+
+                const response = await fetch('/api/paypal-create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        planType: selectedPlan,
+                        amount: config.amount
+                    })
+                });
+
+                const order = await response.json();
+                return order.id;
+            },
+            onApprove: async function(data) {
+                const response = await fetch('/api/paypal-capture-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderID: data.orderID,
+                        planType: selectedPlan
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ 支付成功！\n\n您的起卦碼：' + result.code + '\n請保存此代碼');
+                    window.location.href = '/divination.html?code=' + result.code;
+                } else {
+                    alert('❌ 支付處理失敗：' + result.error);
+                }
+            },
+            onError: function(err) {
+                alert('❌ 支付錯誤：' + err);
             }
-
-            // 驗證格式 (簡單驗證)
-            if (!code.startsWith('LR-')) {
-                alert('起卦碼格式錯誤，應為 LR-XXXX-XXXX');
-                return;
-            }
-
-            // 跳轉到起卦頁面
-            window.location.href = `divination.html?code=${code}`;
-        }
-
-        // 自動格式化起卦碼輸入
-        document.getElementById('existing-code').addEventListener('input', function(e) {
-            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
-            e.target.value = value;
-        });
+        }).render('#paypal-button-container');
     </script>
 </body>
 </html>
