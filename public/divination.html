@@ -609,19 +609,30 @@
 
             try {
                 // 第一步：調用六壬計算API
-                const calcResponse = await fetch('https://liuren-api.vercel.app/api/calculate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        datetime: datetime,
-                        question: question
-                    })
-                });
+let calcResponse;
+try {
+    calcResponse = await fetch('https://liuren-api.vercel.app/api/calculate', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            datetime: datetime,
+            question: question
+        }),
+        mode: 'cors'
+    });
+} catch (fetchError) {
+    console.error('網絡請求失敗:', fetchError);
+    throw new Error('無法連接到六壬計算服務器，請檢查網絡連接或稍後再試。\n錯誤詳情: ' + fetchError.message);
+}
 
-                if (!calcResponse.ok) {
-                    throw new Error('排盤計算失敗');
-                }
-
+if (!calcResponse.ok) {
+    const errorText = await calcResponse.text();
+    console.error('API 錯誤回應:', errorText);
+    throw new Error('排盤計算失敗 (HTTP ' + calcResponse.status + ')');
+}
                 const result = await calcResponse.json();
 
                 if (!result.success) {
