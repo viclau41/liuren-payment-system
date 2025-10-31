@@ -78,7 +78,7 @@ vercel --prod
 3. 添加以下變量：
 
 ```
-ADMIN_PASSWORD = laucheukhungdjvdjv
+ADMIN_PASSWORD = xxxxxxxxxxx
 PAYPAL_CLIENT_ID = 你的PayPal Client ID
 PAYPAL_CLIENT_SECRET = 你的PayPal Secret
 PAYPAL_SANDBOX = false  （測試環境用 true，正式環境用 false）
@@ -136,7 +136,7 @@ PAYPAL_SANDBOX = false  （測試環境用 true，正式環境用 false）
 ### 測試管理後台
 
 1. 訪問 `https://your-domain.com/admin.html`
-2. 使用密碼登入：`laucheukhungdjvdjv`
+2. 使用密碼登入：`xxxxxxxxxxx`
 3. 嘗試生成新起卦碼
 4. 嘗試為現有碼增加次數
 
