@@ -608,23 +608,6 @@
             showLoading('正在生成您的六壬分析報告');
 
             try {
-                // 先扣除次数
-                const deductResponse = await fetch('/api/use-quota', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: currentAccessCode })
-                });
-
-                const deductResult = await deductResponse.json();
-
-                if (!deductResult.success) {
-                    throw new Error(deductResult.error || '扣除次數失敗');
-                }
-
-                // 更新剩余次数
-                remainingQuota = deductResult.remaining;
-                updateQuotaBanner();
-
                 // 第一步：調用六壬計算API
                 const calcResponse = await fetch('https://liuren-api.vercel.app/api/calculate', {
                     method: 'POST',
@@ -712,12 +695,33 @@
                 const fileName = `${reportId}_${timestamp}.html`;
 
                 // 上傳到服務器
-                const reportUrl = await uploadReportToServer(reportHTML, fileName);
+const reportUrl = await uploadReportToServer(reportHTML, fileName);
 
-                hideLoading();
+// ✅ 報告成功生成並上傳後，才扣除配額
+try {
+    const deductResponse = await fetch('/api/use-quota', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: currentAccessCode })
+    });
 
-                // 顯示成功模態框
-                showSuccessModal(reportUrl);
+    const deductResult = await deductResponse.json();
+
+    if (deductResult.success) {
+        // 更新剩余次数
+        remainingQuota = deductResult.remaining;
+        updateQuotaBanner();
+    } else {
+        console.warn('配額扣除失敗，但報告已生成:', deductResult.error);
+    }
+} catch (quotaError) {
+    console.warn('配額扣除請求失敗，但報告已生成:', quotaError);
+}
+
+hideLoading();
+
+// 顯示成功模態框
+showSuccessModal(reportUrl);
 
             } catch (error) {
                 hideLoading();
