@@ -1,21 +1,24 @@
-import getRedis from './redis.js';
-
-// 簡單的密碼哈希（使用 SHA-256）
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
+// ✅ 檢查配額 API（帶密碼驗證）
+import { createClient } from '@vercel/kv';
 
 export default async function handler(req, res) {
-    // CORS 設置
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    // ✅ CORS 設置：允許多個域名訪問
+    const allowedOrigins = [
+        'https://victorlau.myqnapcloud.com',
+        'https://liuren-payment-victor.vercel.app'
+    ];
+
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+        res.setHeader('Access-Control-Allow-Origin', 'https://victorlau.myqnapcloud.com');
+    }
+
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+    // ✅ 處理預檢請求
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
@@ -27,74 +30,74 @@ export default async function handler(req, res) {
     try {
         const { code, password } = req.body;
 
-        if (!code) {
+        // ✅ 驗證起卦碼格式
+        if (!code || !/^LR-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
             return res.status(400).json({
-                success: false,
-                error: '請提供起卦碼'
+                error: '起卦碼格式錯誤',
+                message: '請輸入正確的起卦碼格式 (LR-XXXX-XXXX)'
             });
         }
 
-        if (!password) {
+        // ✅ 驗證密碼（至少6位數字）
+        if (!password || password.length < 6 || !/^\d+$/.test(password)) {
             return res.status(400).json({
-                success: false,
-                error: '請提供密碼'
+                error: '密碼格式錯誤',
+                message: '密碼必須至少6位數字'
             });
         }
 
-        const redis = getRedis();
-        const quotaKey = `quota:${code.toUpperCase()}`;
-        const quotaDataStr = await redis.get(quotaKey);
+        // ✅ 連接 Redis
+        const redis = createClient({
+            url: process.env.KV_REST_API_URL,
+            token: process.env.KV_REST_API_TOKEN,
+        });
 
-        if (!quotaDataStr) {
+        // ✅ 查詢起卦碼數據
+        const key = `quota:${code}`;
+        const data = await redis.get(key);
+
+        if (!data) {
             return res.status(404).json({
-                success: false,
-                error: '起卦碼不存在或已過期'
+                error: '起卦碼不存在',
+                message: '此起卦碼無效或已過期'
             });
         }
 
-        const quotaData = JSON.parse(quotaDataStr);
+        // ✅ 驗證密碼
+        const storedPassword = data.password || data.phone?.slice(-6); // 默認密碼為手機號後6位
 
-        // 驗證密碼
-        const hashedInputPassword = await hashPassword(password);
-        if (hashedInputPassword !== quotaData.password) {
-            return res.status(401).json({
-                success: false,
-                error: '密碼錯誤'
-            });
-        }
-
-        // 檢查是否過期
-        if (new Date(quotaData.expiresAt) < new Date()) {
+        if (password !== storedPassword) {
+            console.log(`❌ 密碼驗證失敗 - 起卦碼: ${code}`);
             return res.status(403).json({
-                success: false,
-                error: '起卦碼已過期'
+                error: '密碼錯誤',
+                message: '請輸入正確的密碼',
+                isPasswordError: true
             });
         }
 
-        // 檢查剩餘次數
-        if (quotaData.remaining <= 0) {
-            return res.status(403).json({
-                success: false,
-                error: '起卦次數已用完',
-                remaining: 0
-            });
-        }
+        // ✅ 密碼正確，返回配額信息
+        const remaining = data.remaining || 0;
+        const total = data.total || 0;
+        const phone = data.phone || '';
+        const createdAt = data.createdAt || '';
+
+        console.log(`✅ 配額查詢成功 - 起卦碼: ${code}, 剩餘: ${remaining}/${total}`);
 
         return res.status(200).json({
             success: true,
-            code: quotaData.code,
-            total: quotaData.total,
-            remaining: quotaData.remaining,
-            phone: quotaData.phone.replace(/(\d{4})\d{4}(\d{4})/, '$1****$2'), // 隱藏部分手機號碼
-            createdAt: quotaData.createdAt,
-            expiresAt: quotaData.expiresAt
+            code: code,
+            remaining: remaining,
+            total: total,
+            phone: phone.replace(/(\d{4})\d{4}(\d{4})/, '$1****$2'), // 手機號碼遮罩顯示
+            createdAt: createdAt
         });
 
     } catch (error) {
-        console.error('檢查配額錯誤:', error);
+        console.error('❌ 檢查配額失敗:', error);
         return res.status(500).json({
-            success: false,
-            error: '服務器錯誤'
+            error: '系統錯誤',
+            message: '檢查配額時發生錯誤，請稍後再試',
+            details: error.message
         });
     }
 }
