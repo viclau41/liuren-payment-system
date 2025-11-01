@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大六壬智慧排盤 - 付款選擇</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ⚠️ 請替換 YOUR_PAYPAL_CLIENT_ID 為你的真實 PayPal Client ID -->
     <script src="https://www.paypal.com/sdk/js?client-id=ASAUF0ean7gjcE1x4TVCG43mQlOBuRGzwfK1Vqr_yfijiJP8fu-IbsJCzpf2WWxJFfztG5iwULW8PhsJ&currency=HKD"></script>
     <style>
         body {
@@ -170,7 +171,6 @@
             border: 2px solid #e2e8f0;
             border-radius: 10px;
             font-size: 16px;
-            text-transform: uppercase;
             text-align: center;
             letter-spacing: 2px;
             font-family: monospace;
@@ -227,10 +227,59 @@
             font-size: 18px;
         }
 
+        /* 新增：方案選擇按鈕 */
+        .plan-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .plan-option {
+            flex: 1;
+            padding: 20px;
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: white;
+        }
+
+        .plan-option:hover {
+            border-color: #cbd5e0;
+        }
+
+        .plan-option.selected {
+            border-color: #336633;
+            background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
+        }
+
+        .plan-option .plan-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .plan-option .plan-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #92400e;
+            margin: 8px 0;
+        }
+
+        .plan-option .plan-desc {
+            font-size: 13px;
+            color: #718096;
+        }
+
         @media(max-width: 768px) {
             .taichi-bg {
                 width: 80px;
                 height: 80px;
+            }
+            .plan-selector {
+                flex-direction: column;
             }
         }
     </style>
@@ -249,8 +298,8 @@
             <!-- 价格卡片 -->
             <div class="price-card">
                 <h2 style="font-size: 24px; color: #92400e; margin-bottom: 10px;">💎 專業起卦服務</h2>
-                <div class="price">HKD 1,000</div>
-                <p style="color: #92400e; font-size: 18px; font-weight: 600;">3次起卦 + 新客送2次</p>
+                <div class="price">HKD 399 起</div>
+                <p style="color: #92400e; font-size: 18px; font-weight: 600;">單次 或 超值套餐</p>
                 <ul class="feature-list">
                     <li>Victor AI 專業六壬分析</li>
                     <li>詳細課式與盤面解讀</li>
@@ -265,6 +314,35 @@
                 <p style="color: #718096; font-size: 14px; margin-bottom: 15px;">
                     付款成功後立即顯示起卦碼，無需等待
                 </p>
+
+                <!-- 新增：方案選擇 -->
+                <div class="plan-selector">
+                    <div class="plan-option selected" onclick="selectPlan('single', 1, 399)">
+                        <div class="plan-name">單次起卦</div>
+                        <div class="plan-price">$399</div>
+                        <div class="plan-desc">1次起卦機會</div>
+                        <div class="plan-desc" style="color: #d69e2e; margin-top: 5px;">測試價：$1</div>
+                    </div>
+                    <div class="plan-option" onclick="selectPlan('triple', 10, 1000)">
+                        <div class="plan-name">超值套餐</div>
+                        <div class="plan-price">$1,000</div>
+                        <div class="plan-desc">3次 + 新客送2次</div>
+                        <div class="plan-desc" style="color: #d69e2e; margin-top: 5px;">測試價：$10</div>
+                    </div>
+                </div>
+
+                <!-- 新增：手機號碼輸入 -->
+                <div class="input-group">
+                    <label for="phone-number">📱 手機號碼（後6位作為密碼）</label>
+                    <input
+                        type="tel"
+                        id="phone-number"
+                        placeholder="例如：61234567"
+                        maxlength="8"
+                        style="text-transform: none; letter-spacing: normal;"
+                    >
+                </div>
+
                 <div id="paypal-button-container"></div>
             </div>
 
@@ -280,7 +358,7 @@
                     <p style="font-size: 18px; font-weight: bold; color: #2d3748; margin: 10px 0;">
                         66381789 或 61883889
                     </p>
-                    <p style="margin-top: 15px;"><strong>💰 金額：</strong>HKD 1,000</p>
+                    <p style="margin-top: 15px;"><strong>💰 金額：</strong>單次 $399 / 套餐 $1,000</p>
                     <p style="margin-top: 10px; color: #d69e2e;">
                         ⚠️ 付款後請 WhatsApp 聯絡我們，提供付款截圖以獲取起卦碼
                     </p>
@@ -303,6 +381,7 @@
                         id="access-code"
                         placeholder="例如：LR-ABCD-1234"
                         maxlength="20"
+                        style="text-transform: uppercase;"
                     >
                 </div>
                 <button class="btn" onclick="verifyAndStart()">
@@ -320,6 +399,24 @@
     </div>
 
     <script>
+        // 新增：選擇的方案狀態
+        let selectedPlan = {
+            planType: 'single',
+            amount: 1,        // 測試金額（正式：399）
+            realAmount: 399
+        };
+
+        // 新增：選擇方案函數
+        function selectPlan(planType, testAmount, realAmount) {
+            selectedPlan = { planType, amount: testAmount, realAmount };
+
+            // 更新 UI
+            document.querySelectorAll('.plan-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+
         // 自定义 Alert 函数
         function showAlert(message) {
             const modal = document.createElement('div');
@@ -333,16 +430,24 @@
             document.body.appendChild(modal);
         }
 
-        // PayPal 按钮设置
+        // PayPal 按钮设置 - 修復：傳送必要參數
         paypal.Buttons({
             createOrder: async function() {
                 try {
+                    // 驗證手機號碼
+                    const phone = document.getElementById('phone-number').value.trim();
+                    if (!phone || phone.length < 8) {
+                        throw new Error('請輸入完整的8位手機號碼');
+                    }
+
+                    // ✅ 修復：傳送 planType, amount, phone 到後端
                     const response = await fetch('/api/paypal-create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            planType: 'triple',
-                            amount: 10
+                            planType: selectedPlan.planType,
+                            amount: selectedPlan.amount,
+                            phone: phone
                         })
                     });
 
@@ -372,8 +477,8 @@
                         throw new Error(result.error || '付款處理失敗');
                     }
 
-                    // 显示成功并提供起卦码
-                    showSuccessModal(result.accessCode, result.remaining);
+                    // 显示成功并提供起卦码和密码
+                    showSuccessModal(result.accessCode, result.password, result.remaining);
                 } catch (error) {
                     showAlert('❌ 付款處理失敗：' + error.message);
                 }
@@ -390,8 +495,8 @@
             }
         }).render('#paypal-button-container');
 
-        // 显示成功模态框
-        function showSuccessModal(accessCode, remaining) {
+        // 显示成功模态框 - 新增密碼顯示
+        function showSuccessModal(accessCode, password, remaining) {
             const modal = document.createElement('div');
             modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;';
             modal.innerHTML = `
@@ -403,12 +508,16 @@
                         <div style="font-size:32px;font-weight:bold;color:#2d3748;letter-spacing:3px;font-family:monospace;margin:15px 0;">
                             ${accessCode}
                         </div>
+                        <p style="color:#2f855a;font-size:14px;margin-top:15px;margin-bottom:5px;">預設密碼（手機號後6位）</p>
+                        <div style="font-size:24px;font-weight:bold;color:#2d3748;letter-spacing:2px;font-family:monospace;">
+                            ${password}
+                        </div>
                         <p style="color:#38a169;font-size:18px;font-weight:600;margin-top:15px;">
                             剩餘次數：${remaining} 次
                         </p>
                     </div>
                     <p style="color:#d69e2e;font-size:14px;margin:20px 0;">
-                        ⚠️ 請保存好您的起卦碼，稍後需要用它來起卦
+                        ⚠️ 請保存好您的起卦碼和密碼，稍後需要用它來起卦
                     </p>
                     <button onclick="copyCode('${accessCode}')" style="width:100%;background:#3182ce;color:white;padding:15px;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;">
                         📋 複製起卦碼
