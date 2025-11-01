@@ -7,6 +7,7 @@ const PAYPAL_API_BASE = process.env.PAYPAL_MODE === 'production'
 async function getPayPalAccessToken() {
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
     const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
@@ -23,6 +24,7 @@ async function getPayPalAccessToken() {
 }
 
 export default async function handler(req, res) {
+    // CORS 設置
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -36,20 +38,30 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { planType, amount } = req.body;
+        const { planType, amount, phone } = req.body;
 
-        // ✅ 使用前端傳來的金額
+        // ✅ 驗證必要參數
+        if (!planType || !amount || !phone) {
+            return res.status(400).json({ error: '缺少必要參數' });
+        }
+
+        // ✅ 使用前端傳來的實際金額
+        let actualAmount = parseFloat(amount);
         let description = '';
+
+        // 根據 planType 設置描述
         if (planType === 'single') {
-            description = '大六壬智慧排盤 - 單次起卦 (測試)';
+            description = '大六壬智慧排盤 - 單次起卦';
         } else if (planType === 'triple') {
-            description = '大六壬智慧排盤 - 3次套餐+送2次 (測試)';
+            description = '大六壬智慧排盤 - 3次套餐 (送2次)';
         } else {
             return res.status(400).json({ error: '無效的方案類型' });
         }
 
+        // 獲取 PayPal Access Token
         const accessToken = await getPayPalAccessToken();
 
+        // 創建訂單
         const orderResponse = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
             method: 'POST',
             headers: {
@@ -61,24 +73,35 @@ export default async function handler(req, res) {
                 purchase_units: [{
                     amount: {
                         currency_code: 'HKD',
-                        value: amount.toFixed(2)  // ✅ 使用前端傳來的金額
+                        value: actualAmount.toFixed(2)  // ✅ 使用實際金額
                     },
                     description: description
-                }]
+                }],
+                application_context: {
+                    brand_name: 'Victor AI 大六壬',
+                    landing_page: 'NO_PREFERENCE',
+                    user_action: 'PAY_NOW'
+                }
             })
         });
 
         const orderData = await orderResponse.json();
 
         if (!orderResponse.ok) {
-            console.error('PayPal 錯誤:', orderData);
-            return res.status(500).json({ error: 'PayPal 錯誤', details: orderData });
+            console.error('PayPal 訂單創建失敗:', orderData);
+            return res.status(500).json({
+                error: 'PayPal 訂單創建失敗',
+                details: orderData
+            });
         }
 
         return res.status(200).json({ id: orderData.id });
 
     } catch (error) {
-        console.error('創建訂單錯誤:', error);
-        return res.status(500).json({ error: '服務器錯誤', message: error.message });
+        console.error('創建 PayPal 訂單錯誤:', error);
+        return res.status(500).json({
+            error: '服務器錯誤',
+            message: error.message
+        });
     }
 }
